@@ -10,7 +10,7 @@ Candy createCandy()
     Candy *newCandy = new Candy;
     
         srand(time(NULL));
-        int  r = (rand() / (RAND_MAX)) + 1;
+        int  r = rand() % 2;
         cout << r << endl;
 
         if (r== 0){
