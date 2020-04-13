@@ -13,4 +13,3 @@ void *produce(int *index);
 void *consume(int *index);
 struct Candy;
 Candy createCandy();
-

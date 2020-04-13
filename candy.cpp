@@ -3,6 +3,7 @@
 struct Candy
 {
     string name;
+    Candy createCandy();
 };
 
 Candy createCandy()
@@ -23,8 +24,3 @@ Candy createCandy()
     return *newCandy;
 }
 
-int main(int argc, char *argv[])
-{
-    Candy one = createCandy();
-    cout << one.name << endl;
-}
