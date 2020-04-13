@@ -7,19 +7,20 @@ struct Candy
 
 Candy createCandy()
 {
-    Candy newCandy = {.name = NULL};
-    /*
+    Candy *newCandy = new Candy;
+    
         srand(time(0));
         double  r = ((double) rand() / (RAND_MAX)) + 1;
+        cout << r << endl;
 
         if (r== 0){
-            newCandy.name = "escargot suckers";
+            newCandy->name = "escargot suckers";
         }
         else{
-            newCandy.name = "froggy bites";
+            newCandy->name = "froggy bites";
         }
-        */
-    return newCandy;
+        
+    return *newCandy;
 }
 
 int main(int argc, char *argv[])
