@@ -1,7 +1,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-#define BUFFERSIZE 10
+#define BELTSIZE 10
 
 //mutex variable to control the buffer access
 sem_t mutex;
@@ -10,7 +10,7 @@ sem_t ItemsOnBelt;
 //will track the number of spaces avaialable in the buffer
 sem_t OpenSpaceOnBelt;
 
-char buf[BUFFERSIZE];
+char belt[BELTSIZE];
 
 int main(int argc, char *argv[]){
     pthread_t thread1, thread2;
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]){
     //init the size of ItemsOnBelt, starts at 0 because nothing has been addem
     sem_init(&ItemsOnBelt, 0, 0);
     //init size of Open spots, starts at buffer size cuz all space is available
-    sem_init(&OpenSpaceOnBelt, 0, BUFFERSIZE);
+    sem_init(&OpenSpaceOnBelt, 0, BELTSIZE);
 
 
 }
@@ -34,12 +34,12 @@ void *produce(int *index){
         sem_wait(&OpenSpaceOnBelt);
         sem_wait(&mutex);
         //add item to buffer
-        buf[currProduceIndex] = currProduceIndex;
+        belt[currProduceIndex] = currProduceIndex;
 
         //notifiy the end of this process
         sem_post(&mutex);
         sem_post(&ItemsOnBelt);
-        currProduceIndex = (currProduceIndex+1) % BUFFERSIZE;
+        currProduceIndex = (currProduceIndex+1) % BELTSIZE;
     }
 }
 
@@ -52,7 +52,7 @@ void *consume(int *index){
             //remove the candy here from the buffer
             sem_post(&mutex);
             sem_post(&OpenSpaceOnBelt);
-            currentConsumeIndex = (currentConsumeIndex +1) % BUFFERSIZE;
+            currentConsumeIndex = (currentConsumeIndex +1) % BELTSIZE;
 
         }
 
