@@ -9,8 +9,8 @@ Candy createCandy()
 {
     Candy *newCandy = new Candy;
     
-        srand(time(0));
-        double  r = ((double) rand() / (RAND_MAX)) + 1;
+        srand(time(NULL));
+        int  r = (rand() / (RAND_MAX)) + 1;
         cout << r << endl;
 
         if (r== 0){
