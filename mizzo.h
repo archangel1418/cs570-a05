@@ -14,7 +14,4 @@ void *consume(int *index);
 
 Candy createCandy();
 
-struct Candy
-{
-    string name;
-};
+struct Candy;
