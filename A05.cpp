@@ -22,10 +22,10 @@ int main(int argc, char *argv[]){
     //init size of Open spots, starts at buffer size cuz all space is available
     sem_init(&OpenSpotsInBuffer, 0, BUFFERSIZE);
 
-    
+
 }
 
-void *producer(int *index){
+void *produce(int *index){
     //intitalize the start //this should be where we produce the item
     int * startIndex = index;
     int currProduceIndex = *startIndex;
@@ -43,7 +43,7 @@ void *producer(int *index){
     }
 }
 
-void *consumer(int *index){
+void *consume(int *index){
         int * startIndex = index;
         int currentConsumeIndex = *startIndex;
         while(true){
