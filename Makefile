@@ -2,12 +2,14 @@ CXX=g++
 
 CXXFLAGS=-std=c++11 -g
 
-pagetable : PageTable.o byu_tracereader.o
+mizzo : producer.o consumer.o belt.o
 	$(CXX) $(CXXFLAGS) -o pagetable $^
 
-PageTable.o : PageInit.h PageTable.C
+producer.o : mizzo.h producer.cpp
 
-byu_tracereader.o: PageInit.h byu_tracereader.C
+consumer.o : mizzo.h consumer.cpp
+
+belt.o : mizzo.h belt.cpp
 
 clean :
 	rm *.o
