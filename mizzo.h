@@ -1,5 +1,6 @@
 #include <semaphore.h>
 #include <pthread.h>
+#include <string>
 
 using namespace std;
 
@@ -8,3 +9,7 @@ using namespace std;
 void *produce(int *index);
 
 void *consume(int *index);
+
+struct Candy {
+    string name;
+};
