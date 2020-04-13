@@ -1,4 +1,4 @@
-#include <mizzo.h>
+#include "mizzo.h"
 
 //mutex variable to control the buffer access
 sem_t mutex;
