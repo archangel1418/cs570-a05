@@ -1,24 +1,18 @@
 #include "mizzo.h"
 
-struct Candy
+Candy Candy::createCandy()
 {
-    string name;
-    //Candy createCandy();
-};
-
-Candy * createCandy()
-{
-    Candy *newCandy = new Candy;
+    struct Candy newCandy;
     
         srand(time(NULL));
         int  r = rand() % 2;
         cout << r << endl;
 
         if (r== 0){
-            newCandy->name = "escargot suckers";
+            newCandy.name = "escargot suckers";
         }
         else{
-            newCandy->name = "froggy bites";
+            newCandy.name = "froggy bites";
         }
         
     return newCandy;

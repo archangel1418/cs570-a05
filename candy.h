@@ -9,7 +9,9 @@
 
 using namespace std;
 
+struct Candy{
+    string name;
+    Candy createCandy();
+};
 void *produce(int *index);
 void *consume(int *index);
-struct Candy;
-//Candy * createCandy();
