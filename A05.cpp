@@ -1,4 +1,4 @@
-#include "mizzo.h"
+#include "candy.cpp"
 
 //mutex variable to control the buffer access
 sem_t mutex1;
@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
 void *produce()
 {
     //intitalize the start //this should be where we produce the item
-    Candy nextCandy= createCandy();
-   //define starting index which is 0
-    int index =0;
+    Candy nextCandy = createCandy();
+    //define starting index which is 0
+    int index = 0;
     while (true)
     {
         //nextCandy= createCandy();
@@ -41,7 +41,6 @@ void *produce()
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
         index++;
-        
     }
 }
 
