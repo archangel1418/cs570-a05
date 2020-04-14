@@ -3,10 +3,10 @@
 struct Candy
 {
     string name;
-    Candy createCandy();
+    //Candy createCandy();
 };
 
-Candy createCandy()
+Candy * createCandy()
 {
     Candy *newCandy = new Candy;
     
@@ -21,6 +21,6 @@ Candy createCandy()
             newCandy->name = "froggy bites";
         }
         
-    return *newCandy;
+    return newCandy;
 }
 

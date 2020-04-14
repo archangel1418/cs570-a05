@@ -8,6 +8,7 @@ sem_t ItemsOnBelt;
 sem_t OpenSpaceOnBelt;
 
 Candy belt[BELTSIZE];
+int frogcounter;
 
 int main(int argc, char *argv[])
 {
@@ -24,20 +25,23 @@ int main(int argc, char *argv[])
 void *produce()
 {
     //intitalize the start //this should be where we produce the item
-    Candy nextCandy;
+    Candy *nextCandy= new Candy;
+   //define starting index which is 0
+    int index =0;
     while (true)
     {
-        nextCandy.createCandy();
+        nextCandy= createCandy();
         // protect from overflow and control buffer
         sem_wait(&OpenSpaceOnBelt);
         sem_wait(&mutex1);
         //add item to buffer
-        belt[currProduceIndex] = currProduceIndex;
+        belt[index] = *nextCandy;
 
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
-        currProduceIndex = (currProduceIndex + 1) % BELTSIZE;
+        index++;
+        
     }
 }
 
