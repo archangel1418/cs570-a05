@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 {
     //Handles flags from command line
     char *hold;
-    int timeDelay;
+    int timeDelay = 0;
 
     for (int k = 1; k < argc; k++)
     {
