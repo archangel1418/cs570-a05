@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     int consumerIndex = 0;
 
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
-    //int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
+    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
     //produceCount++;
     int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
     //int r4 = pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
