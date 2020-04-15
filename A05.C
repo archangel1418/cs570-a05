@@ -77,7 +77,7 @@ void *produce(void *index)
         //dont think we need this increment anymore
         //prodIndex = (prodIndex + 1) % BELTSIZE;
     }
-    //pthread_exit(0);
+    pthread_exit(0);
 }
 
 void *consume(void *index)
@@ -104,6 +104,7 @@ void *consume(void *index)
         sem_post(&OpenSpaceOnBelt);
         //conIndex = (conIndex + 1) % BELTSIZE;
     }
+    pthread_exit(0);
 }
 
 int main(int argc, char *argv[])
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
         belt[i].name = "";
     }
 
-    pthread_t prothread1, prothread2, conthread1, conthread2;
+    pthread_t prothread1, prothread2, Ethread, Lthread;
 
     // initialize mutex, its a binary mutex so it is either going to be 0 or 1
     sem_init(&mutex1, 0, 1);
@@ -124,18 +125,19 @@ int main(int argc, char *argv[])
 
     int produceIndex = 0;
     int consumerIndex = 0;
+    
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
     //int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
     //produceCount++;
-    int r3 = pthread_create(&conthread1, NULL, consume, (void *)&consumerIndex);
+    int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
     //int r4 = pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
 
-    /*
+    
     pthread_join(prothread1, NULL);
-    pthread_join(prothread2, NULL);
-    pthread_join(conthread1, NULL);
-    pthread_join(conthread2, NULL);
-    */
+    //pthread_join(prothread2, NULL);
+    pthread_join(Ethread, NULL);
+    //pthread_join(conthread2, NULL);
+    
 
     sem_destroy(&mutex1);
     sem_destroy(&ItemsOnBelt);

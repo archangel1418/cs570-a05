@@ -2,6 +2,8 @@
     "files.associations": {
         "__config": "cpp",
         "__nullptr": "cpp",
-        "wordcount.C": "cpp"
+        "wordcount.C": "cpp",
+        "candy.C": "cpp",
+        "A05.C": "cpp"
     }
 }
