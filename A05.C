@@ -57,7 +57,7 @@ void *produce(void *index)
 {
     //pthread_t thread;
     int *startIndex = static_cast<int *>(index);
-	int prodIndex = *startIndex;
+    int prodIndex = *startIndex;
     //*startIndex= getProduceIndex(belt);
     //intitalize the start //this should be where we create the item
 
@@ -99,8 +99,8 @@ void *consume(void *index)
 {
     //int candyCount = getCandyCount(belt);
     int *startIndex = static_cast<int *>(index);
-	int conIndex = *startIndex;
-    while (produceCount<100)
+    int conIndex = *startIndex;
+    while (produceCount < 100)
     {
         //candyCount = getCandyCount(belt);
         //cout << candyCount << endl;
@@ -129,6 +129,37 @@ void *consume(void *index)
 
 int main(int argc, char *argv[])
 {
+    //Handles flags from command line
+    char *hold;
+    int timeDelay;
+
+    for (int k = 1; k < argc; k++)
+    {
+        if ((strncmp(argv[k], "-E", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+
+        if ((strncmp(argv[k], "-L", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+
+        if ((strncmp(argv[k], "-f", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+
+        if ((strncmp(argv[k], "-e", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+    }
+
     for (int i = 0; i < BELTSIZE; i++)
     {
         belt[i].name = "";
