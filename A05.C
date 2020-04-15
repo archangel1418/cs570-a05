@@ -57,6 +57,7 @@ void *produce(void *index)
 {
     //pthread_t thread;
     int *startIndex = static_cast<int *>(index);
+	int prodIndex = *startIndex;
     //*startIndex= getProduceIndex(belt);
     //intitalize the start //this should be where we create the item
 
@@ -69,7 +70,6 @@ void *produce(void *index)
     //define starting index which is 0
     while (produceCount < 100)
     {
-        *startIndex = getProduceIndex(belt);
         Candy nextCandy = createCandy();
         //nextCandy= createCandy();
         // protect from overflow and control buffer
@@ -78,7 +78,7 @@ void *produce(void *index)
         //will check if mutex is >=0 if so it will enter and decrement mutex
         sem_wait(&mutex1);
         //add item to buffer
-        belt[*startIndex].name = nextCandy.name;
+        belt[prodIndex].name = nextCandy.name;
         produceCount++;
         //keep track of number of froggy bites on belt at one time
         if (nextCandy.name == "froggy bites")
@@ -90,38 +90,39 @@ void *produce(void *index)
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
         //dont think we need this increment anymore
-        //prodIndex = (prodIndex + 1) % BELTSIZE;
+        prodIndex = (prodIndex + 1) % BELTSIZE;
     }
     pthread_exit(0);
 }
 
 void *consume(void *index)
 {
-    int candyCount = getCandyCount(belt);
+    //int candyCount = getCandyCount(belt);
     int *startIndex = static_cast<int *>(index);
-    while (true)
+	int conIndex = *startIndex;
+    while (produceCount<100)
     {
-        candyCount = getCandyCount(belt);
-        cout << candyCount << endl;
-        *startIndex = getConsumeIndex(belt);
+        //candyCount = getCandyCount(belt);
+        //cout << candyCount << endl;
+        //*startIndex = getConsumeIndex(belt);
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
         //check if candy we are removing is a frog if so decrement counter
-        if (belt[*startIndex].name == "froggy bites")
+        if (belt[conIndex].name == "froggy bites")
         {
             frogcounter--;
         }
-        cout << "Consumed: " << belt[*startIndex].name << endl;
+        cout << "Consumed: " << belt[conIndex].name << endl;
         //remove candy from belt
-        belt[*startIndex].name = "";
+        belt[conIndex].name = "";
 
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
-        candyCount = getCandyCount(belt);
-        //conIndex = (conIndex + 1) % BELTSIZE;
+        //candyCount = getCandyCount(belt);
+        conIndex = (conIndex + 1) % BELTSIZE;
     }
     pthread_exit(0);
 }
