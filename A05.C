@@ -62,20 +62,21 @@ void *produce(void *index)
 {
     //pthread_t thread;
     int *startIndex = static_cast<int *>(index);
-	int prodIndex = *startIndex;
+    int prodIndex = *startIndex;
     //*startIndex= getProduceIndex(belt);
     //intitalize the start //this should be where we create the item
 
     //checks if there are 3 froggy bites on the belt
-    
+
     //define starting index which is 0
     while (produceCount < 15)
     {
-		//usleep(5);
+        //usleep(5);
         Candy nextCandy = createCandy();
-		if (frogcounter==3){
-        nextCandy.name = "escargot suckers";
-    	}
+        if (frogcounter == 3)
+        {
+            nextCandy.name = "escargot suckers";
+        }
         // protect from overflow and control buffer
         //will check if openSpaceOnBelt is >0 if so it will enter and decrement open spaces
         sem_wait(&OpenSpaceOnBelt);
@@ -89,9 +90,9 @@ void *produce(void *index)
         {
             frogcounter++;
         }
-		sem_wait(&print);
-        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: "<< prodIndex << endl;
-		sem_post(&print);
+        sem_wait(&print);
+        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: " << prodIndex << endl;
+        sem_post(&print);
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
@@ -105,8 +106,8 @@ void *consume(void *index)
 {
     //int candyCount = getCandyCount(belt);
     int *startIndex = static_cast<int *>(index);
-	int conIndex = *startIndex;
-    while (conCount<15)
+    int conIndex = *startIndex;
+    while (conCount < 15)
     {
         //candyCount = getCandyCount(belt);
         //cout << candyCount << endl;
@@ -116,34 +117,63 @@ void *consume(void *index)
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
         //check if candy we are removing is a frog if so decrement counter
-		Candy temp = belt[conIndex];
+        Candy temp = belt[conIndex];
         if (temp.name == "froggy bites")
         {
             frogcounter--;
         }
-		//remove candy
-		belt[conIndex].name = "";
-		conCount++;
-		sem_wait(&print);
+        //remove candy
+        belt[conIndex].name = "";
+        conCount++;
+        sem_wait(&print);
         cout << "Consumed: " << temp.name << "Total consumed: " << conCount << "at index: " << conIndex << endl;
-		int count = getCandyCount(belt);
-		cout << "candies on belt: " << count << endl;
-		sem_post(&print);
+        int count = getCandyCount(belt);
+        cout << "candies on belt: " << count << endl;
+        sem_post(&print);
         //remove candy from belt
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
         //candyCount = getCandyCount(belt);
         conIndex = (conIndex + 1) % BELTSIZE;
-		//conIndex = getConsumeIndex(belt);
-		
-		
+        //conIndex = getConsumeIndex(belt);
     }
     pthread_exit(0);
 }
 
 int main(int argc, char *argv[])
 {
+    //Handles flags from command line
+    char *hold;
+    int timeDelay;
+
+    for (int k = 1; k < argc; k++)
+    {
+        if ((strncmp(argv[k], "-E", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+
+        if ((strncmp(argv[k], "-L", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+
+        if ((strncmp(argv[k], "-f", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+
+        if ((strncmp(argv[k], "-e", 2)) == 0)
+        {
+            hold = argv[k + 1];
+            timeDelay = stoi(hold);
+        }
+    }
+
     for (int i = 0; i < BELTSIZE; i++)
     {
         belt[i].name = "";
@@ -157,8 +187,8 @@ int main(int argc, char *argv[])
     sem_init(&ItemsOnBelt, 0, 0);
     //init size of Open spots, starts at buffer size cuz all space is available
     sem_init(&OpenSpaceOnBelt, 0, BELTSIZE);
-	//init size of print, make this a binary semaphore
-	sem_init(&print, 0, 1);
+    //init size of print, make this a binary semaphore
+    sem_init(&print, 0, 1);
 
     int produceIndex = 0;
     int consumerIndex = 0;
