@@ -1,6 +1,7 @@
 #include "candy.h"
 #include <semaphore.h>
 #include <pthread.h>
+#include <unistd.h>
 
 //mutex variable to control the buffer access
 sem_t mutex1;
@@ -9,10 +10,14 @@ sem_t ItemsOnBelt;
 //will track the number of spaces avaialable in the buffer
 sem_t OpenSpaceOnBelt;
 
+//will keep track of printing
+sem_t print;
+
 Candy belt[BELTSIZE];
 int frogcounter;
 int produceCount = 0;
 bool stopProduce = true;
+int conCount = 0;
 
 //get index for producer by checking null in the belt array, return first index that is null
 int getProduceIndex(Candy buff[])
@@ -45,7 +50,7 @@ int getCandyCount(Candy buff[])
     int candyOnBelt = 0;
     for (int i = 0; i < 10; i++)
     {
-        if (buff[i].name != "")
+        if (buff[i].name == "froggy bites" || buff[i].name == "escargot suckers")
         {
             candyOnBelt++;
         }
@@ -62,16 +67,15 @@ void *produce(void *index)
     //intitalize the start //this should be where we create the item
 
     //checks if there are 3 froggy bites on the belt
-    /*
-    if (frogcounter>=3){
-        nextCandy.name = "escargot suckers";
-    }
-    */
+    
     //define starting index which is 0
-    while (produceCount < 100)
+    while (produceCount < 15)
     {
+		//usleep(5);
         Candy nextCandy = createCandy();
-        //nextCandy= createCandy();
+		if (frogcounter==3){
+        nextCandy.name = "escargot suckers";
+    	}
         // protect from overflow and control buffer
         //will check if openSpaceOnBelt is >0 if so it will enter and decrement open spaces
         sem_wait(&OpenSpaceOnBelt);
@@ -85,7 +89,9 @@ void *produce(void *index)
         {
             frogcounter++;
         }
-        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << endl;
+		sem_wait(&print);
+        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: "<< prodIndex << endl;
+		sem_post(&print);
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
@@ -100,7 +106,7 @@ void *consume(void *index)
     //int candyCount = getCandyCount(belt);
     int *startIndex = static_cast<int *>(index);
 	int conIndex = *startIndex;
-    while (produceCount<100)
+    while (conCount<15)
     {
         //candyCount = getCandyCount(belt);
         //cout << candyCount << endl;
@@ -110,19 +116,28 @@ void *consume(void *index)
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
         //check if candy we are removing is a frog if so decrement counter
-        if (belt[conIndex].name == "froggy bites")
+		Candy temp = belt[conIndex];
+        if (temp.name == "froggy bites")
         {
             frogcounter--;
         }
-        cout << "Consumed: " << belt[conIndex].name << endl;
+		//remove candy
+		belt[conIndex].name = "";
+		conCount++;
+		sem_wait(&print);
+        cout << "Consumed: " << temp.name << "Total consumed: " << conCount << "at index: " << conIndex << endl;
+		int count = getCandyCount(belt);
+		cout << "candies on belt: " << count << endl;
+		sem_post(&print);
         //remove candy from belt
-        belt[conIndex].name = "";
-
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
         //candyCount = getCandyCount(belt);
         conIndex = (conIndex + 1) % BELTSIZE;
+		//conIndex = getConsumeIndex(belt);
+		
+		
     }
     pthread_exit(0);
 }
@@ -142,6 +157,8 @@ int main(int argc, char *argv[])
     sem_init(&ItemsOnBelt, 0, 0);
     //init size of Open spots, starts at buffer size cuz all space is available
     sem_init(&OpenSpaceOnBelt, 0, BELTSIZE);
+	//init size of print, make this a binary semaphore
+	sem_init(&print, 0, 1);
 
     int produceIndex = 0;
     int consumerIndex = 0;
@@ -150,7 +167,7 @@ int main(int argc, char *argv[])
     int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
     //produceCount++;
     int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
-    //int r4 = pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
+    //int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumerIndex);
 
     pthread_join(prothread1, NULL);
     //pthread_join(prothread2, NULL);
