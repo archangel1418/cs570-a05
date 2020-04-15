@@ -9,6 +9,7 @@ sem_t OpenSpaceOnBelt;
 
 Candy belt[BELTSIZE];
 int frogcounter;
+int produceCount;
 
 //get index for producer by checking null in the belt array, return first index that is null
 int getProduceIndex(Candy buff[]){
@@ -30,50 +31,66 @@ int getConsumeIndex(Candy buff[]){
     return -1;
 }
 
-void *produce()
+void *produce(void *index)
 {
-    //intitalize the start //this should be where we produce the item
-    Candy nextCandy = createCandy();
+    int *startIndex= static_cast<int*> (index);
+    int prodIndex = *startIndex;
+    //intitalize the start //this should be where we create the item
+    
+    //checks if there are 3 froggy bites on the belt
+    /*
     if (frogcounter>=3){
         nextCandy.name = "escargot suckers";
     }
+    */
     //define starting index which is 0
-    int index= getProduceIndex(belt);
     while (true)
     {
+        Candy nextCandy = createCandy();
         //nextCandy= createCandy();
         // protect from overflow and control buffer
+        //will check if openSpaceOnBelt is >0 if so it will enter and decrement open spaces
         sem_wait(&OpenSpaceOnBelt);
+        //will check if mutex is >=0 if so it will enter and decrement mutex
         sem_wait(&mutex1);
         //add item to buffer
-        belt[index] = nextCandy;
+        belt[prodIndex] = nextCandy;
+        //keep track of number of froggy bites on belt at one time
         if (nextCandy.name=="froggy bites"){
         frogcounter++;
         }
+        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << endl;
+        produceCount++;
 
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
         //dont think we need this increment anymore
-        //index++;
+        prodIndex = (prodIndex +1) % BELTSIZE;
     }
 }
 
-void *consume()
+void *consume(void *index)
 {
-    int index = getConsumeIndex(belt);
+    int *startIndex= static_cast<int*> (index);
+    int conIndex = *startIndex;
     while (true)
     {
+        //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
+        //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
-        //remove the candy here from the buffer
-        if(belt[index].name== "froggy bites"){
+        //check if candy we are removing is a frog if so decrement counter
+        if(belt[conIndex].name== "froggy bites"){
             frogcounter--;
         }
-        belt[index].name = "";
+        //remove candy from belt
+        belt[conIndex].name = "";
+        
+        //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
-        //currentConsumeIndex = (currentConsumeIndex + 1) % BELTSIZE;
+        conIndex = (conIndex + 1) % BELTSIZE;
     }
 }
 
@@ -83,7 +100,7 @@ int main(int argc, char *argv[])
         belt[i].name = "";
     }
 
-    pthread_t thread1, thread2;
+    pthread_t prothread1, prothread2, conthread1, conthread2;
 
     // initialize mutex, its a binary mutex so it is either going to be 0 or 1
     sem_init(&mutex1, 0, 1);
@@ -91,4 +108,28 @@ int main(int argc, char *argv[])
     sem_init(&ItemsOnBelt, 0, 0);
     //init size of Open spots, starts at buffer size cuz all space is available
     sem_init(&OpenSpaceOnBelt, 0, BELTSIZE);
+
+
+    int produceIndex=0;
+    int consumerIndex=0;
+    produceCount=0;
+    while(produceCount <100){
+        int r1= pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
+        int r2= pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
+        //produceCount++;
+        int r3= pthread_create(&conthread1, NULL, consume, (void *)&consumerIndex);
+        int r4= pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
+    }
+    /*
+    pthread_join(prothread1, NULL);
+    pthread_join(prothread2, NULL);
+    pthread_join(conthread1, NULL);
+    pthread_join(conthread2, NULL);
+    */
+
+
+
+    sem_destroy(&mutex1);
+    sem_destroy(&ItemsOnBelt);
+    sem_destroy(&OpenSpaceOnBelt);
 }
