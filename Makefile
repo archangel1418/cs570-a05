@@ -1,6 +1,6 @@
 CXX=g++
 
-CXXFLAGS=-std=c++11 -g
+CXXFLAGS=-std=c++11 -g -lpthread
 
 mizzo : A05.o candy.o
 	$(CXX) $(CXXFLAGS) -o mizzo $^
