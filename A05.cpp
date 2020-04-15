@@ -1,3 +1,4 @@
+//#include "candy.h"
 #include "candy.cpp"
 
 //mutex variable to control the buffer access
@@ -40,8 +41,9 @@ int getConsumeIndex(Candy buff[])
 
 void *produce(void *index)
 {
+    //pthread_t thread;
     int *startIndex = static_cast<int *>(index);
-    int prodIndex = *startIndex;
+    //*startIndex= getProduceIndex(belt);
     //intitalize the start //this should be where we create the item
     
     //checks if there are 3 froggy bites on the belt
@@ -51,8 +53,8 @@ void *produce(void *index)
     }
     */
     //define starting index which is 0
-    while (true)
-    {
+    while (produceCount < 100){
+       *startIndex= getProduceIndex(belt);
        Candy nextCandy = createCandy();
         //nextCandy= createCandy();
         // protect from overflow and control buffer
@@ -61,32 +63,28 @@ void *produce(void *index)
         //will check if mutex is >=0 if so it will enter and decrement mutex
         sem_wait(&mutex1);
         //add item to buffer
-        belt[prodIndex] = nextCandy;
+        belt[*startIndex] = nextCandy;
+        produceCount++;
         //keep track of number of froggy bites on belt at one time
         if (nextCandy.name == "froggy bites")
         {
             frogcounter++;
         }
         cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << endl;
-        produceCount++;
-        if(produceCount==100){
-            stopProduce=false;
-        }
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
         //dont think we need this increment anymore
-        prodIndex = (prodIndex + 1) % BELTSIZE;
+        //prodIndex = (prodIndex + 1) % BELTSIZE;
     }
-    return NULL;
+    //pthread_exit(0);
 }
 
 void *consume(void *index)
 {
     int *startIndex = static_cast<int *>(index);
     int conIndex = *startIndex;
-    while (true)
-    {
+    while(true){
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
@@ -96,14 +94,16 @@ void *consume(void *index)
         {
             frogcounter--;
         }
+        cout << "Consumed: " << belt[conIndex].name << endl;
         //remove candy from belt
         belt[conIndex].name = "";
 
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
-        conIndex = (conIndex + 1) % BELTSIZE;
+        //conIndex = (conIndex + 1) % BELTSIZE;
     }
+    
 }
 
 int main(int argc, char *argv[])
@@ -124,13 +124,12 @@ int main(int argc, char *argv[])
 
     int produceIndex = 0;
     int consumerIndex = 0;
-    while (produceCount <96){
-        int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
+    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
         //int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
         //produceCount++;
-        int r3 = pthread_create(&conthread1, NULL, consume, (void *)&consumerIndex);
+    int r3 = pthread_create(&conthread1, NULL, consume, (void *)&consumerIndex);
         //int r4 = pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
-    }
+      
     
     /*
     pthread_join(prothread1, NULL);

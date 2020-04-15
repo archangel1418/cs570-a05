@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <random>
 
 #define BELTSIZE 10
 
