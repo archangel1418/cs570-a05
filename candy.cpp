@@ -1,7 +1,6 @@
 #include "candy.h"
 #include <random>
 
-
 Candy createCandy()
 {
     uniform_int_distribution<int> d(0, 1);
