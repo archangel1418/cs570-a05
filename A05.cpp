@@ -1,4 +1,4 @@
-#include "candy.h"
+#include "candy.cpp"
 
 //mutex variable to control the buffer access
 sem_t mutex1;
@@ -9,7 +9,8 @@ sem_t OpenSpaceOnBelt;
 
 Candy belt[BELTSIZE];
 int frogcounter;
-int produceCount;
+int produceCount=0;
+bool stopProduce =true;
 
 //get index for producer by checking null in the belt array, return first index that is null
 int getProduceIndex(Candy buff[])
@@ -42,7 +43,7 @@ void *produce(void *index)
     int *startIndex = static_cast<int *>(index);
     int prodIndex = *startIndex;
     //intitalize the start //this should be where we create the item
-
+    
     //checks if there are 3 froggy bites on the belt
     /*
     if (frogcounter>=3){
@@ -52,7 +53,7 @@ void *produce(void *index)
     //define starting index which is 0
     while (true)
     {
-        Candy nextCandy = createCandy();
+       Candy nextCandy = createCandy();
         //nextCandy= createCandy();
         // protect from overflow and control buffer
         //will check if openSpaceOnBelt is >0 if so it will enter and decrement open spaces
@@ -68,13 +69,16 @@ void *produce(void *index)
         }
         cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << endl;
         produceCount++;
-
+        if(produceCount==100){
+            stopProduce=false;
+        }
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
         //dont think we need this increment anymore
         prodIndex = (prodIndex + 1) % BELTSIZE;
     }
+    return NULL;
 }
 
 void *consume(void *index)
@@ -120,15 +124,14 @@ int main(int argc, char *argv[])
 
     int produceIndex = 0;
     int consumerIndex = 0;
-    produceCount = 0;
-    while (produceCount < 100)
-    {
+    while (produceCount <96){
         int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
-        int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
+        //int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
         //produceCount++;
         int r3 = pthread_create(&conthread1, NULL, consume, (void *)&consumerIndex);
-        int r4 = pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
+        //int r4 = pthread_create(&conthread2, NULL, consume, (void *)&consumerIndex);
     }
+    
     /*
     pthread_join(prothread1, NULL);
     pthread_join(prothread2, NULL);
