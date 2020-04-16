@@ -180,7 +180,7 @@ void *consume(void *index)
         cout << "Belt: " << indexPtr->frogcounter
              << " frogs + " << escargotCount << " escargots = "
              << escargotCount + indexPtr->frogcounter
-             << ". Produced: " << indexPtr->produceCount
+             << ". Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
              << " consumed " << temp.name << endl;
         sem_post(&print);
