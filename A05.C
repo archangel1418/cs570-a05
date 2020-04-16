@@ -56,7 +56,7 @@ void *produce(void *index)
     indexPtr = (struct IndexManager *)index;
 
     //Loop production of candies till limit is reached
-    while (indexPtr->produceCount < 24)
+    while (indexPtr->produceCount < 99)
     {
         //usleep(5);
         
@@ -119,7 +119,7 @@ void *consume(void *index)
     indexPtr = (struct IndexManager *)index;
     //int x=0;
 
-    while (indexPtr->conCount < 24)
+    while (indexPtr->conCount < 99)
     {
     	sem_wait(&print);
     	if (indexPtr->name=="Ethel"){
@@ -192,16 +192,21 @@ void *consume(void *index)
         //get amount of escargot suckers after consumption
         int escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
+        
+
+        //remove candy
+        belt[indexPtr->beltIndex].name = "";
+        indexPtr->conCount++;
+        
         sem_wait(&print);
         cout << "Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
              << " consumed " << belt[indexPtr->beltIndex].name
              << "index: " << indexPtr->beltIndex << "\nBelt:";
         sem_post(&print);
-
-        //remove candy
-        belt[indexPtr->beltIndex].name = "";
-        indexPtr->conCount++;
+        
+        
+        
         sem_wait(&print);
         for(int i =0; i<BELTSIZE; i++){
         	cout <<  i << ": " << belt[i].name << endl;	
