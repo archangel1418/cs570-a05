@@ -10,10 +10,6 @@ sem_t OpenSpaceOnBelt;
 sem_t print;
 
 Candy belt[BELTSIZE];
-int frogcounter;
-int produceCount = 0;
-bool stopProduce = true;
-int conCount = 0;
 
 //get index for producer by checking null in the belt array, return first index that is null
 int getProduceIndex(Candy buff[])
@@ -60,11 +56,11 @@ void *produce(void *index)
     indexPtr = (struct IndexManager *)index;
 
     //Loop production of candies till limit is reached
-    while (produceCount < 25)
+    while (indexPtr->produceCount < 25)
     {
         //usleep(5);
         Candy nextCandy = createCandy();
-        if (frogcounter == 3)
+        if (indexPtr->frogcounter == 3)
         {
             nextCandy.name = "escargot suckers";
         }
@@ -76,16 +72,18 @@ void *produce(void *index)
         sem_wait(&mutex1);
         //add item to buffer
         belt[indexPtr->beltIndex].name = nextCandy.name;
-        produceCount++;
+        indexPtr->produceCount++;
 
         //keep track of number of froggy bites on belt at one time
         if (nextCandy.name == "froggy bites")
         {
-            frogcounter++;
+            indexPtr->frogcounter++;
         }
 
         sem_wait(&print);
-        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << " at index: " << indexPtr->beltIndex << endl;
+        cout << "Produced: " << nextCandy.name
+             << " Total Produced: " << indexPtr->produceCount
+             << " at index: " << indexPtr->beltIndex << endl;
         sem_post(&print);
 
         //set where we are currently on the beltIndex
@@ -106,7 +104,7 @@ void *consume(void *index)
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
 
-    while (conCount < 25)
+    while (indexPtr->conCount < 25)
     {
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
@@ -117,15 +115,18 @@ void *consume(void *index)
         Candy temp = belt[indexPtr->beltIndex];
         if (temp.name == "froggy bites")
         {
-            frogcounter--;
+            indexPtr->frogcounter--;
         }
 
         //remove candy
         belt[indexPtr->beltIndex].name = "";
-        conCount++;
+        indexPtr->conCount++;
 
         sem_wait(&print);
-        cout << "Consumed: " << temp.name << "Total consumed: " << conCount << "at index: " << indexPtr->beltIndex << endl;
+        cout << "Consumed: " << temp.name << "Total consumed: "
+             << indexPtr->conCount << "at index: "
+             << indexPtr->beltIndex << endl;
+
         int count = getCandyCount(belt);
         cout << "candies on belt: " << count << endl;
         sem_post(&print);

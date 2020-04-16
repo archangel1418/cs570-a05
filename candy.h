@@ -15,6 +15,10 @@ using namespace std;
 struct IndexManager
 {
     int beltIndex;
+    int frogcounter;
+    int produceCount;
+    int conCount;
+    string name;
 };
 
 struct Candy
