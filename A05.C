@@ -1,7 +1,4 @@
 #include "candy.h"
-#include <semaphore.h>
-#include <pthread.h>
-#include <unistd.h>
 
 //mutex variable to control the buffer access
 sem_t mutex1;
@@ -9,7 +6,6 @@ sem_t mutex1;
 sem_t ItemsOnBelt;
 //will track the number of spaces avaialable in the buffer
 sem_t OpenSpaceOnBelt;
-
 //will keep track of printing
 sem_t print;
 
@@ -60,15 +56,10 @@ int getCandyCount(Candy buff[])
 
 void *produce(void *index)
 {
-    //pthread_t thread;
-    int *startIndex = static_cast<int *>(index);
-    int prodIndex = *startIndex;
-    //*startIndex= getProduceIndex(belt);
-    //intitalize the start //this should be where we create the item
+    struct IndexManager *indexPtr;
+    indexPtr = (struct IndexManager *)index;
 
-    //checks if there are 3 froggy bites on the belt
-
-    //define starting index which is 0
+    //Loop production of candies till limit is reached
     while (produceCount < 15)
     {
         //usleep(5);
@@ -77,27 +68,32 @@ void *produce(void *index)
         {
             nextCandy.name = "escargot suckers";
         }
-        // protect from overflow and control buffer
+
+        //protect from overflow and control buffer
         //will check if openSpaceOnBelt is >0 if so it will enter and decrement open spaces
         sem_wait(&OpenSpaceOnBelt);
         //will check if mutex is >=0 if so it will enter and decrement mutex
         sem_wait(&mutex1);
         //add item to buffer
-        belt[prodIndex].name = nextCandy.name;
+        belt[indexPtr->beltIndex].name = nextCandy.name;
         produceCount++;
+
         //keep track of number of froggy bites on belt at one time
         if (nextCandy.name == "froggy bites")
         {
             frogcounter++;
         }
+
         sem_wait(&print);
-        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: " << prodIndex << endl;
+        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: " << indexPtr->beltIndex << endl;
         sem_post(&print);
+
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
-        //dont think we need this increment anymore
-        prodIndex = (prodIndex + 1) % BELTSIZE;
+
+        //set where we are currently on the beltIndex
+        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
     }
     pthread_exit(0);
 }
@@ -190,13 +186,13 @@ int main(int argc, char *argv[])
     //init size of print, make this a binary semaphore
     sem_init(&print, 0, 1);
 
-    int produceIndex = 0;
-    int consumerIndex = 0;
+    struct IndexManager placeholder;
+    placeholder.beltIndex = 0;
 
-    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
-    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
+    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&placeholder);
+    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&placeholder);
     //produceCount++;
-    int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
+    //int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
     //int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumerIndex);
 
     pthread_join(prothread1, NULL);
