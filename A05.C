@@ -40,7 +40,7 @@ int getConsumeIndex(Candy buff[])
 int getCandyCount(Candy buff[])
 {
     int candyOnBelt = 0;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < BELTSIZE; i++)
     {
         if (buff[i].name == "froggy bites" || buff[i].name == "escargot suckers")
         {
@@ -93,13 +93,6 @@ void *produce(void *index)
              << escargotCount + indexPtr->frogcounter
              << ". Produced: " << indexPtr->produceCount
              << " Added " << nextCandy.name << endl;
-
-        sem_post(&print);
-
-        //set where we are currently on the beltIndex
-        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
-        sem_wait(&print);
-        cout << "Thread Index: " << indexPtr->beltIndex << endl;
         sem_post(&print);
 
         //notifiy the end of this process
@@ -114,19 +107,19 @@ void *consume(void *index)
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
 
-    //switch between Lucy and Ethel consuming candies
-    if (indexPtr->switchConsumer = 0)
-    {
-        indexPtr->name = "Lucy";
-        indexPtr->switchConsumer++;
-    }
-    else
-    {
-        indexPtr->name = "Ethel";
-    }
-
     while (indexPtr->conCount < 24)
     {
+        //switch between Lucy and Ethel consuming candies
+        if (indexPtr->switchConsumer = 0)
+        {
+            indexPtr->name = "Lucy";
+            indexPtr->switchConsumer++;
+        }
+        else
+        {
+            indexPtr->name = "Ethel";
+            indexPtr->switchConsumer--;
+        }
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
