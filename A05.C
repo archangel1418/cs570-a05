@@ -85,15 +85,18 @@ void *produce(void *index)
         }
 
         sem_wait(&print);
-        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: " << indexPtr->beltIndex << endl;
+        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << " at index: " << indexPtr->beltIndex << endl;
         sem_post(&print);
+
+        //set where we are currently on the beltIndex
+        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
+		sem_wait(&print);
+		cout << "Thread Index: " << indexPtr->beltIndex << endl;
+		sem_post(&print);
 
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
-
-        //set where we are currently on the beltIndex
-        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
     }
     pthread_exit(0);
 }
@@ -186,14 +189,17 @@ int main(int argc, char *argv[])
     //init size of print, make this a binary semaphore
     sem_init(&print, 0, 1);
 
-    struct IndexManager placeholder;
-    placeholder.beltIndex = 0;
+    struct IndexManager producePlaceholder;
+    producePlaceholder.beltIndex = 0;
 
-    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&placeholder);
-    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&placeholder);
+	struct IndexManager consumePlaceholder;
+    consumePlaceholder.beltIndex = 0;
+
+    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
+    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
     //produceCount++;
-    //int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
-    //int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumerIndex);
+    int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
+    //int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
 
     pthread_join(prothread1, NULL);
     //pthread_join(prothread2, NULL);
