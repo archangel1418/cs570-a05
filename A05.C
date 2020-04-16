@@ -117,14 +117,18 @@ void *consume(void *index)
 {
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
-    int x=0;
+    //int x=0;
 
     while (indexPtr->conCount < 24)
     {
-    	
-    	
-        
-    	
+    	if (indexPtr->name=="Ethel"){
+    		indexPtr->name = "Lucy";
+    		cout << "switch to L" << endl;
+    	}
+    	else if (indexPtr->name== "Lucy"){
+    		indexPtr->name = "Ethel";
+    		cout << "switch to E" << endl;
+    	}
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
@@ -132,6 +136,7 @@ void *consume(void *index)
         
 
         //switch between Lucy and Ethel consuming candies
+        /*
         if (indexPtr->switchConsumer = 0)
         {
             indexPtr->name = "Lucy";
@@ -142,10 +147,11 @@ void *consume(void *index)
             indexPtr->name = "Ethel";
             indexPtr->switchConsumer--;
         }
+        */
 
         //inc candy count based on person
         Candy temp;
-        temp.name = belt[x].name;
+        temp.name = belt[indexPtr->beltIndex].name;
         if (indexPtr->name == "Lucy")
         {
             if (temp.name == "froggy bites")
@@ -246,7 +252,7 @@ int main(int argc, char *argv[])
         belt[i].name = "";
     }
 
-    pthread_t prothread1, prothread2, Lthread, Ethread;
+    pthread_t prothread1, prothread2, cthread, Ethread;
 
     // initialize mutex, its a binary mutex so it is either going to be 0 or 1
     sem_init(&mutex1, 0, 1);
@@ -270,14 +276,27 @@ int main(int argc, char *argv[])
 
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
     int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
-
+	
+	for(int k =0; k<=1; k++){
+		if(k==0){
+			cout << "setting Lucy" << endl;
+			consumePlaceholder.name = "Lucy";
+		}
+		else{
+			consumePlaceholder.name = "Ethel";
+		}
+		pthread_create(&cthread, NULL, consume, (void *)&consumePlaceholder);
+	}
+	
+	/*
     int r3 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
     int r4 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
+    */
 
     pthread_join(prothread1, NULL);
     pthread_join(prothread2, NULL);
-    pthread_join(Lthread, NULL);
-    pthread_join(Ethread, NULL);
+    pthread_join(cthread, NULL);
+    //pthread_join(Ethread, NULL);
 
     sem_destroy(&mutex1);
     sem_destroy(&ItemsOnBelt);
