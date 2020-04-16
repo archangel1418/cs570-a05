@@ -1,7 +1,4 @@
 #include "candy.h"
-#include <semaphore.h>
-#include <pthread.h>
-#include <unistd.h>
 
 //mutex variable to control the buffer access
 sem_t mutex1;
@@ -9,15 +6,10 @@ sem_t mutex1;
 sem_t ItemsOnBelt;
 //will track the number of spaces avaialable in the buffer
 sem_t OpenSpaceOnBelt;
-
 //will keep track of printing
 sem_t print;
 
 Candy belt[BELTSIZE];
-int frogcounter;
-int produceCount = 0;
-bool stopProduce = true;
-int conCount = 0;
 
 //get index for producer by checking null in the belt array, return first index that is null
 int getProduceIndex(Candy buff[])
@@ -60,83 +52,93 @@ int getCandyCount(Candy buff[])
 
 void *produce(void *index)
 {
-    //pthread_t thread;
-    int *startIndex = static_cast<int *>(index);
-    int prodIndex = *startIndex;
-    //*startIndex= getProduceIndex(belt);
-    //intitalize the start //this should be where we create the item
+    struct IndexManager *indexPtr;
+    indexPtr = (struct IndexManager *)index;
 
-    //checks if there are 3 froggy bites on the belt
-
-    //define starting index which is 0
-    while (produceCount < 15)
+    //Loop production of candies till limit is reached
+    while (indexPtr->produceCount < 25)
     {
         //usleep(5);
         Candy nextCandy = createCandy();
-        if (frogcounter == 3)
+		
+		//keep track of number of froggy bites on belt at one time
+		indexPtr->frogcounter = 0;
+		for (int j = 0; j < BELTSIZE; j++)
+		{
+			if (belt[j].name == "froggy bites")
+			{
+				indexPtr->frogcounter++;
+			}
+		}
+
+        if (indexPtr->frogcounter == 3)
         {
             nextCandy.name = "escargot suckers";
         }
-        // protect from overflow and control buffer
+
+        //protect from overflow and control buffer
         //will check if openSpaceOnBelt is >0 if so it will enter and decrement open spaces
         sem_wait(&OpenSpaceOnBelt);
         //will check if mutex is >=0 if so it will enter and decrement mutex
         sem_wait(&mutex1);
         //add item to buffer
-        belt[prodIndex].name = nextCandy.name;
-        produceCount++;
-        //keep track of number of froggy bites on belt at one time
-        if (nextCandy.name == "froggy bites")
-        {
-            frogcounter++;
-        }
+        belt[indexPtr->beltIndex].name = nextCandy.name;
+        indexPtr->produceCount++;
+
         sem_wait(&print);
-        cout << "Produced: " << nextCandy.name << " Total Produced: " << produceCount << "at index: " << prodIndex << endl;
+        cout << "Produced: " << nextCandy.name
+             << " Total Produced: " << indexPtr->produceCount
+             << " at index: " << indexPtr->beltIndex << endl;
         sem_post(&print);
+
+        //set where we are currently on the beltIndex
+        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
+        sem_wait(&print);
+        cout << "Thread Index: " << indexPtr->beltIndex << endl;
+        sem_post(&print);
+
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
-        //dont think we need this increment anymore
-        prodIndex = (prodIndex + 1) % BELTSIZE;
     }
     pthread_exit(0);
 }
 
 void *consume(void *index)
 {
-    //int candyCount = getCandyCount(belt);
-    int *startIndex = static_cast<int *>(index);
-    int conIndex = *startIndex;
-    while (conCount < 15)
+    struct IndexManager *indexPtr;
+    indexPtr = (struct IndexManager *)index;
+
+    while (indexPtr->conCount < 25)
     {
-        //candyCount = getCandyCount(belt);
-        //cout << candyCount << endl;
-        //*startIndex = getConsumeIndex(belt);
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
-        //check if candy we are removing is a frog if so decrement counter
-        Candy temp = belt[conIndex];
-        if (temp.name == "froggy bites")
-        {
-            frogcounter--;
-        }
+
         //remove candy
-        belt[conIndex].name = "";
-        conCount++;
+		Candy temp = belt[indexPtr->beltIndex];
+        belt[indexPtr->beltIndex].name = "";
+        indexPtr->conCount++;
+
         sem_wait(&print);
-        cout << "Consumed: " << temp.name << "Total consumed: " << conCount << "at index: " << conIndex << endl;
+        cout << "Consumed: " << temp.name << "Total consumed: "
+             << indexPtr->conCount << "at index: "
+             << indexPtr->beltIndex << endl;
+
         int count = getCandyCount(belt);
         cout << "candies on belt: " << count << endl;
         sem_post(&print);
+
+        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
+        sem_wait(&print);
+        cout << "Thread Index: " << indexPtr->beltIndex << endl;
+        sem_post(&print);
+
         //remove candy from belt
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
-        //candyCount = getCandyCount(belt);
-        conIndex = (conIndex + 1) % BELTSIZE;
-        //conIndex = getConsumeIndex(belt);
     }
     pthread_exit(0);
 }
@@ -190,14 +192,22 @@ int main(int argc, char *argv[])
     //init size of print, make this a binary semaphore
     sem_init(&print, 0, 1);
 
-    int produceIndex = 0;
-    int consumerIndex = 0;
+	//init struct and set attr for produce thread
+    struct IndexManager producePlaceholder;
+    producePlaceholder.beltIndex = 0;
+	producePlaceholder.produceCount = 0;
+	producePlaceholder.frogcounter = 0;
 
-    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&produceIndex);
-    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&produceIndex);
-    //produceCount++;
-    int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumerIndex);
-    //int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumerIndex);
+	//init struct and set attr for consume thread
+    struct IndexManager consumePlaceholder;
+    consumePlaceholder.beltIndex = 0;
+	consumePlaceholder.conCount = 0;
+
+    int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
+    int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
+
+    int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
+    int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
 
     pthread_join(prothread1, NULL);
     //pthread_join(prothread2, NULL);

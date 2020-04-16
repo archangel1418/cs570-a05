@@ -20,12 +20,3 @@ Candy createCandy()
 
     return newCandy;
 }
-
-/*
-int main(int argc, char *argv[]){
-    for (int i= 0; i<=10; i++){
-        Candy newCandy = createCandy();
-        cout << newCandy.name << endl;
-    }
-}
-*/
