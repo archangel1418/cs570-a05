@@ -19,7 +19,15 @@ struct IndexManager
     int frogcounter;
     int produceCount;
     int conCount;
+
     string name;
+    int lucyTotalConsume = 0;
+    int lucyFrogConsume = 0;
+    int lucyEscargotConsume = 0;
+    int ethelTotalConsume = 0;
+    int ethelFrogConsume = 0;
+    int ethelEscargotConsume = 0;
+    int switchConsumer = 0;
 };
 
 struct Candy

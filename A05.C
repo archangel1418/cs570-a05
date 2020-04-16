@@ -56,20 +56,20 @@ void *produce(void *index)
     indexPtr = (struct IndexManager *)index;
 
     //Loop production of candies till limit is reached
-    while (indexPtr->produceCount < 25)
+    while (indexPtr->produceCount < 24)
     {
         //usleep(5);
         Candy nextCandy = createCandy();
-		
-		//keep track of number of froggy bites on belt at one time
-		indexPtr->frogcounter = 0;
-		for (int j = 0; j < BELTSIZE; j++)
-		{
-			if (belt[j].name == "froggy bites")
-			{
-				indexPtr->frogcounter++;
-			}
-		}
+
+        //keep track of number of froggy bites on belt at one time
+        indexPtr->frogcounter = 0;
+        for (int j = 0; j < BELTSIZE; j++)
+        {
+            if (belt[j].name == "froggy bites")
+            {
+                indexPtr->frogcounter++;
+            }
+        }
 
         if (indexPtr->frogcounter == 3)
         {
@@ -85,10 +85,15 @@ void *produce(void *index)
         belt[indexPtr->beltIndex].name = nextCandy.name;
         indexPtr->produceCount++;
 
+        int escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
+
         sem_wait(&print);
-        cout << "Produced: " << nextCandy.name
-             << " Total Produced: " << indexPtr->produceCount
-             << " at index: " << indexPtr->beltIndex << endl;
+        cout << "Belt: " << indexPtr->frogcounter
+             << " frogs + " << escargotCount << " = "
+             << escargotCount + indexPtr->frogcounter
+             << ". Produced: " << indexPtr->produceCount
+             << " Added " << nextCandy.name << endl;
+
         sem_post(&print);
 
         //set where we are currently on the beltIndex
@@ -109,33 +114,77 @@ void *consume(void *index)
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
 
-    while (indexPtr->conCount < 25)
+    //switch between Lucy and Ethel consuming candies
+    if (indexPtr->switchConsumer = 0)
+    {
+        indexPtr->name = "Lucy";
+        indexPtr->switchConsumer++;
+    }
+    else
+    {
+        indexPtr->name = "Ethel";
+    }
+
+    while (indexPtr->conCount < 24)
     {
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
 
+        //inc candy count based on person
+        Candy temp = belt[indexPtr->beltIndex];
+        if (indexPtr->name == "Lucy")
+        {
+            if (temp.name == "froggy bites")
+            {
+                indexPtr->lucyFrogConsume++;
+            }
+            else
+            {
+                indexPtr->lucyEscargotConsume++;
+            }
+            indexPtr->lucyTotalConsume++;
+        }
+        else
+        {
+            if (temp.name == "froggy bites")
+            {
+                indexPtr->ethelFrogConsume++;
+            }
+            else
+            {
+                indexPtr->ethelEscargotConsume++;
+            }
+            indexPtr->ethelTotalConsume++;
+        }
+
         //remove candy
-		Candy temp = belt[indexPtr->beltIndex];
         belt[indexPtr->beltIndex].name = "";
         indexPtr->conCount++;
 
-        sem_wait(&print);
-        cout << "Consumed: " << temp.name << "Total consumed: "
-             << indexPtr->conCount << "at index: "
-             << indexPtr->beltIndex << endl;
+        //get amount of froggy bites after consumption
+        for (int j = 0; j < BELTSIZE; j++)
+        {
+            if (belt[j].name == "froggy bites")
+            {
+                indexPtr->frogcounter++;
+            }
+        }
+        //get amount of escargot suckers after consumption
+        int escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
-        int count = getCandyCount(belt);
-        cout << "candies on belt: " << count << endl;
+        sem_wait(&print);
+        cout << "Belt: " << indexPtr->frogcounter
+             << " frogs + " << escargotCount << " = "
+             << escargotCount + indexPtr->frogcounter
+             << ". Produced: " << indexPtr->produceCount
+             << " " << indexPtr->name
+             << " consumed " << temp.name << endl;
         sem_post(&print);
 
         indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
-        sem_wait(&print);
-        cout << "Thread Index: " << indexPtr->beltIndex << endl;
-        sem_post(&print);
 
-        //remove candy from belt
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
@@ -181,7 +230,7 @@ int main(int argc, char *argv[])
         belt[i].name = "";
     }
 
-    pthread_t prothread1, prothread2, Ethread, Lthread;
+    pthread_t prothread1, prothread2, Lthread, Ethread;
 
     // initialize mutex, its a binary mutex so it is either going to be 0 or 1
     sem_init(&mutex1, 0, 1);
@@ -192,29 +241,51 @@ int main(int argc, char *argv[])
     //init size of print, make this a binary semaphore
     sem_init(&print, 0, 1);
 
-	//init struct and set attr for produce thread
+    //init struct and set attr for produce thread
     struct IndexManager producePlaceholder;
     producePlaceholder.beltIndex = 0;
-	producePlaceholder.produceCount = 0;
-	producePlaceholder.frogcounter = 0;
+    producePlaceholder.produceCount = 0;
+    producePlaceholder.frogcounter = 0;
 
-	//init struct and set attr for consume thread
+    //init struct and set attr for consume thread
     struct IndexManager consumePlaceholder;
     consumePlaceholder.beltIndex = 0;
-	consumePlaceholder.conCount = 0;
+    consumePlaceholder.conCount = 0;
 
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
     int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
 
-    int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
-    int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
+    int r3 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
+    int r4 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
 
     pthread_join(prothread1, NULL);
-    //pthread_join(prothread2, NULL);
+    pthread_join(prothread2, NULL);
+    pthread_join(Lthread, NULL);
     pthread_join(Ethread, NULL);
-    //pthread_join(conthread2, NULL);
 
     sem_destroy(&mutex1);
     sem_destroy(&ItemsOnBelt);
     sem_destroy(&OpenSpaceOnBelt);
+
+    cout << "PRODUCTION REPORT" << '\n'
+         << "----------------------------------------" << '\n'
+         << "Crunchy frog bite producer generated "
+         << consumePlaceholder.lucyFrogConsume +
+                consumePlaceholder.ethelFrogConsume
+         << " candies \n"
+         << "Escargot sucker producer generated "
+         << consumePlaceholder.lucyEscargotConsume +
+                consumePlaceholder.ethelEscargotConsume
+         << " candies \n"
+         << "Lucy consumed " << consumePlaceholder.lucyFrogConsume
+         << " crunchy frog bites + "
+         << consumePlaceholder.lucyEscargotConsume
+         << " escargot suckers = " << consumePlaceholder.lucyTotalConsume
+         << '\n'
+         << "Ethel consumed "
+         << consumePlaceholder.ethelFrogConsume
+         << " crunchy frog bites + "
+         << consumePlaceholder.ethelEscargotConsume
+         << " escargot suckers = " << consumePlaceholder.ethelTotalConsume
+         << endl;
 }
