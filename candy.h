@@ -7,6 +7,7 @@
 #include <iostream>
 #include <random>
 #include <unistd.h>
+#include <time.h>
 
 #define BELTSIZE 10
 

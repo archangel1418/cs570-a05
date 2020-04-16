@@ -60,6 +60,17 @@ void *produce(void *index)
     {
         //usleep(5);
         Candy nextCandy = createCandy();
+		
+		//keep track of number of froggy bites on belt at one time
+		indexPtr->frogcounter = 0;
+		for (int j = 0; j < BELTSIZE; j++)
+		{
+			if (belt[j].name == "froggy bites")
+			{
+				indexPtr->frogcounter++;
+			}
+		}
+
         if (indexPtr->frogcounter == 3)
         {
             nextCandy.name = "escargot suckers";
@@ -73,12 +84,6 @@ void *produce(void *index)
         //add item to buffer
         belt[indexPtr->beltIndex].name = nextCandy.name;
         indexPtr->produceCount++;
-
-        //keep track of number of froggy bites on belt at one time
-        if (nextCandy.name == "froggy bites")
-        {
-            indexPtr->frogcounter++;
-        }
 
         sem_wait(&print);
         cout << "Produced: " << nextCandy.name
@@ -111,14 +116,8 @@ void *consume(void *index)
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
 
-        //check if candy we are removing is a frog if so decrement counter
-        Candy temp = belt[indexPtr->beltIndex];
-        if (temp.name == "froggy bites")
-        {
-            indexPtr->frogcounter--;
-        }
-
         //remove candy
+		Candy temp = belt[indexPtr->beltIndex];
         belt[indexPtr->beltIndex].name = "";
         indexPtr->conCount++;
 
@@ -193,11 +192,16 @@ int main(int argc, char *argv[])
     //init size of print, make this a binary semaphore
     sem_init(&print, 0, 1);
 
+	//init struct and set attr for produce thread
     struct IndexManager producePlaceholder;
     producePlaceholder.beltIndex = 0;
+	producePlaceholder.produceCount = 0;
+	producePlaceholder.frogcounter = 0;
 
+	//init struct and set attr for consume thread
     struct IndexManager consumePlaceholder;
     consumePlaceholder.beltIndex = 0;
+	consumePlaceholder.conCount = 0;
 
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
     int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
