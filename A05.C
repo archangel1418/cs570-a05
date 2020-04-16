@@ -121,6 +121,7 @@ void *consume(void *index)
 
     while (indexPtr->conCount < 24)
     {
+    	sem_wait(&print);
     	if (indexPtr->name=="Ethel"){
     		indexPtr->name = "Lucy";
     		cout << "switch to L" << endl;
@@ -129,6 +130,7 @@ void *consume(void *index)
     		indexPtr->name = "Ethel";
     		cout << "switch to E" << endl;
     	}
+    	sem_post(&print);
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
@@ -194,7 +196,7 @@ void *consume(void *index)
         cout << "Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
              << " consumed " << belt[indexPtr->beltIndex].name
-             << "index: " << indexPtr->beltIndex << "\nBelt:" << endl;
+             << "index: " << indexPtr->beltIndex << "\nBelt:";
         sem_post(&print);
 
         //remove candy
@@ -279,11 +281,10 @@ int main(int argc, char *argv[])
 	
 	for(int k =0; k<=1; k++){
 		if(k==0){
-			cout << "setting Lucy" << endl;
-			consumePlaceholder.name = "Lucy";
+			consumePlaceholder.name = "Ethel";
 		}
 		else{
-			consumePlaceholder.name = "Ethel";
+			consumePlaceholder.name = "Lucy";
 		}
 		pthread_create(&cthread, NULL, consume, (void *)&consumePlaceholder);
 	}
@@ -301,7 +302,8 @@ int main(int argc, char *argv[])
     sem_destroy(&mutex1);
     sem_destroy(&ItemsOnBelt);
     sem_destroy(&OpenSpaceOnBelt);
-
+	
+	sem_wait(&print);
     cout << "PRODUCTION REPORT" << '\n'
          << "----------------------------------------" << '\n'
          << "Crunchy frog bite producer generated "
@@ -321,4 +323,6 @@ int main(int argc, char *argv[])
          << consumePlaceholder.ethelEscargotConsume
          << " escargot suckers = " << consumePlaceholder.ethelTotalConsume
          << endl;
+     sem_post(&print);
+     sem_destroy(&print);
 }
