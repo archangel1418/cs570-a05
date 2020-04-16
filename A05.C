@@ -59,6 +59,8 @@ void *produce(void *index)
     while (indexPtr->produceCount < 24)
     {
         //usleep(5);
+        
+       
         Candy nextCandy = createCandy();
 
         //keep track of number of froggy bites on belt at one time
@@ -94,13 +96,16 @@ void *produce(void *index)
         indexPtr->escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
         sem_wait(&print);
-        cout << "Belt: " << indexPtr->frogcounter
-             << " frogs + " << indexPtr->escargotCount << " escargots = "
-             << indexPtr->escargotCount + indexPtr->frogcounter
-             << ". Produced: " << indexPtr->produceCount
-             << " Added " << belt[indexPtr->beltIndex].name << endl;
+        cout << ". Produced: " << indexPtr->produceCount
+             << " Added " << belt[indexPtr->beltIndex].name << 
+             "at index: " << indexPtr->beltIndex <<"\nBelt:" << endl;
         sem_post(&print);
-
+        sem_wait(&print);
+        for(int i =0; i<BELTSIZE; i++){
+        	cout <<  i << ": " << belt[i].name << endl;	
+        }
+		sem_post(&print);
+		indexPtr->beltIndex = (indexPtr->beltIndex +1) % BELTSIZE;
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
@@ -112,14 +117,19 @@ void *consume(void *index)
 {
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
+    int x=0;
 
     while (indexPtr->conCount < 24)
     {
-
+    	
+    	
+        
+    	
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
+        
 
         //switch between Lucy and Ethel consuming candies
         if (indexPtr->switchConsumer = 0)
@@ -135,7 +145,7 @@ void *consume(void *index)
 
         //inc candy count based on person
         Candy temp;
-        temp.name = belt[indexPtr->beltIndex].name;
+        temp.name = belt[x].name;
         if (indexPtr->name == "Lucy")
         {
             if (temp.name == "froggy bites")
@@ -161,30 +171,34 @@ void *consume(void *index)
             indexPtr->ethelTotalConsume++;
         }
 
-        //remove candy
-        belt[indexPtr->beltIndex].name = "";
-        indexPtr->conCount++;
+        
 
         //get amount of froggy bites after consumption
         for (int j = 0; j < BELTSIZE; j++)
         {
             if (belt[j].name == "froggy bites")
             {
-                indexPtr->frogcounter++;
+                indexPtr->frogcounter--;
             }
         }
         //get amount of escargot suckers after consumption
         int escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
         sem_wait(&print);
-        cout << "Belt: " << indexPtr->frogcounter
-             << " frogs + " << escargotCount << " escargots = "
-             << escargotCount + indexPtr->frogcounter
-             << ". Consumed: " << indexPtr->conCount
+        cout << "Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
-             << " consumed " << temp.name << endl;
+             << " consumed " << belt[indexPtr->beltIndex].name
+             << "index: " << indexPtr->beltIndex << "\nBelt:" << endl;
         sem_post(&print);
 
+        //remove candy
+        belt[indexPtr->beltIndex].name = "";
+        indexPtr->conCount++;
+        sem_wait(&print);
+        for(int i =0; i<BELTSIZE; i++){
+        	cout <<  i << ": " << belt[i].name << endl;	
+        }
+        sem_post(&print);
         indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
 
         //increment

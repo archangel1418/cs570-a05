@@ -17,8 +17,8 @@ struct IndexManager
 {
     int beltIndex;
     int frogcounter;
-    int produceCount;
-    int conCount;
+    int produceCount=0;
+    int conCount=0;
     int escargotCount;
 	int totalFrogs;
 	int totalE;
