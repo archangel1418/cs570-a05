@@ -60,7 +60,7 @@ void *produce(void *index)
     indexPtr = (struct IndexManager *)index;
 
     //Loop production of candies till limit is reached
-    while (produceCount < 15)
+    while (produceCount < 25)
     {
         //usleep(5);
         Candy nextCandy = createCandy();
@@ -106,7 +106,7 @@ void *consume(void *index)
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
 
-    while (conCount < 15)
+    while (conCount < 25)
     {
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
