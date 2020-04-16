@@ -89,10 +89,10 @@ void *produce(void *index)
 
         sem_wait(&print);
         cout << "Belt: " << indexPtr->frogcounter
-             << " frogs + " << escargotCount << " = "
+             << " frogs + " << escargotCount << " escargots = "
              << escargotCount + indexPtr->frogcounter
              << ". Produced: " << indexPtr->produceCount
-             << " Added " << nextCandy.name << endl;
+             << " Added " << belt[indexPtr->beltIndex].name << endl;
         sem_post(&print);
 
         //notifiy the end of this process
@@ -169,7 +169,7 @@ void *consume(void *index)
 
         sem_wait(&print);
         cout << "Belt: " << indexPtr->frogcounter
-             << " frogs + " << escargotCount << " = "
+             << " frogs + " << escargotCount << " escargots = "
              << escargotCount + indexPtr->frogcounter
              << ". Produced: " << indexPtr->produceCount
              << " " << indexPtr->name
