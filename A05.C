@@ -90,9 +90,9 @@ void *produce(void *index)
 
         //set where we are currently on the beltIndex
         indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
-		sem_wait(&print);
-		cout << "Thread Index: " << indexPtr->beltIndex << endl;
-		sem_post(&print);
+        sem_wait(&print);
+        cout << "Thread Index: " << indexPtr->beltIndex << endl;
+        sem_post(&print);
 
         //notifiy the end of this process
         sem_post(&mutex1);
@@ -103,39 +103,42 @@ void *produce(void *index)
 
 void *consume(void *index)
 {
-    //int candyCount = getCandyCount(belt);
-    int *startIndex = static_cast<int *>(index);
-    int conIndex = *startIndex;
+    struct IndexManager *indexPtr;
+    indexPtr = (struct IndexManager *)index;
+
     while (conCount < 15)
     {
-        //candyCount = getCandyCount(belt);
-        //cout << candyCount << endl;
-        //*startIndex = getConsumeIndex(belt);
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
+
         //check if candy we are removing is a frog if so decrement counter
-        Candy temp = belt[conIndex];
+        Candy temp = belt[indexPtr->beltIndex];
         if (temp.name == "froggy bites")
         {
             frogcounter--;
         }
+
         //remove candy
-        belt[conIndex].name = "";
+        belt[indexPtr->beltIndex].name = "";
         conCount++;
+
         sem_wait(&print);
-        cout << "Consumed: " << temp.name << "Total consumed: " << conCount << "at index: " << conIndex << endl;
+        cout << "Consumed: " << temp.name << "Total consumed: " << conCount << "at index: " << indexPtr->beltIndex << endl;
         int count = getCandyCount(belt);
         cout << "candies on belt: " << count << endl;
         sem_post(&print);
+
+        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
+        sem_wait(&print);
+        cout << "Thread Index: " << indexPtr->beltIndex << endl;
+        sem_post(&print);
+
         //remove candy from belt
         //increment
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
-        //candyCount = getCandyCount(belt);
-        conIndex = (conIndex + 1) % BELTSIZE;
-        //conIndex = getConsumeIndex(belt);
     }
     pthread_exit(0);
 }
@@ -192,14 +195,14 @@ int main(int argc, char *argv[])
     struct IndexManager producePlaceholder;
     producePlaceholder.beltIndex = 0;
 
-	struct IndexManager consumePlaceholder;
+    struct IndexManager consumePlaceholder;
     consumePlaceholder.beltIndex = 0;
 
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
     int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
-    //produceCount++;
+
     int r3 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
-    //int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
+    int r4 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
 
     pthread_join(prothread1, NULL);
     //pthread_join(prothread2, NULL);
