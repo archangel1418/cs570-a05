@@ -84,6 +84,12 @@ void *produce(void *index)
         //add item to buffer
         belt[indexPtr->beltIndex].name = nextCandy.name;
         indexPtr->produceCount++;
+		if (belt[indexPtr->beltIndex].name == "froggy bites"){
+				indexPtr->totalFrogs++;
+		}
+		else{
+			indexPtr->totalE++;
+		}
 
         indexPtr->escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
@@ -266,12 +272,10 @@ int main(int argc, char *argv[])
     cout << "PRODUCTION REPORT" << '\n'
          << "----------------------------------------" << '\n'
          << "Crunchy frog bite producer generated "
-         << consumePlaceholder.lucyFrogConsume +
-                consumePlaceholder.ethelFrogConsume
+         << producePlaceholder.totalFrogs
          << " candies \n"
          << "Escargot sucker producer generated "
-         << consumePlaceholder.lucyEscargotConsume +
-                consumePlaceholder.ethelEscargotConsume
+         << producePlaceholder.totalE
          << " candies \n"
          << "Lucy consumed " << consumePlaceholder.lucyFrogConsume
          << " crunchy frog bites + "

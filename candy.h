@@ -20,6 +20,8 @@ struct IndexManager
     int produceCount;
     int conCount;
     int escargotCount;
+	int totalFrogs;
+	int totalE;
 
     string name;
     int lucyTotalConsume = 0;
