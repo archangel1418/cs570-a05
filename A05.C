@@ -37,6 +37,7 @@ int getConsumeIndex(Candy buff[])
     return -1;
 }
 
+//returns the amount of candies in the belt
 int getCandyCount(Candy buff[])
 {
     int candyOnBelt = 0;
@@ -50,6 +51,8 @@ int getCandyCount(Candy buff[])
     return candyOnBelt;
 }
 
+//our produce method, creates a candy object and records the candy object 
+//and adds it to the belt
 void *produce(void *index)
 {
     struct IndexManager *indexPtr;
@@ -91,6 +94,7 @@ void *produce(void *index)
 
         if (belt[indexPtr->beltIndex].name == "froggy bites")
         {
+            //increment total frogs on the belt
             indexPtr->totalFrogs++;
 
             int miliSecHold = indexPtr->frogProductionDelay % 1000;
@@ -99,6 +103,7 @@ void *produce(void *index)
         }
         else
         {
+        	//increment total escargots on the belt
             indexPtr->totalE++;
 
             int miliSecHold = indexPtr->escargotProductionDelay % 1000;
@@ -110,10 +115,12 @@ void *produce(void *index)
 
         indexPtr->escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
+		//print statement 1
         sem_wait(&print);
         cout << "Produced: " << indexPtr->produceCount
-             << " Added " << belt[indexPtr->beltIndex].name << "at index: " << indexPtr->beltIndex << "\nBELT= ";
+             << " Added " << belt[indexPtr->beltIndex].name << " at index: " << indexPtr->beltIndex << "\nBELT= ";
         sem_post(&print);
+        //print statement 2
         sem_wait(&print);
         for (int i = 0; i < BELTSIZE; i++)
         {
@@ -121,6 +128,7 @@ void *produce(void *index)
         }
         cout << "\n";
         sem_post(&print);
+        //increment our index
         indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
         //notifiy the end of this process
         sem_post(&mutex1);
@@ -129,6 +137,7 @@ void *produce(void *index)
     pthread_exit(0);
 }
 
+//consume method take the index we are at and removes that candy from the belt
 void *consume(void *index)
 {
     struct IndexManager *indexPtr;
@@ -137,9 +146,10 @@ void *consume(void *index)
     //setup for time delays
     struct timespec sleepTime;
     int nanoConvert = 1000000;
-
+	//loop 
     while (indexPtr->conCount < 99)
     {
+    	//switches between consumer threads
         sem_wait(&print);
         if (indexPtr->name == "Ethel")
         {
@@ -148,8 +158,6 @@ void *consume(void *index)
             int miliSecHold = indexPtr->lucyTimeDelay % 1000;
             sleepTime.tv_nsec = miliSecHold * nanoConvert;
             sleepTime.tv_sec = indexPtr->lucyTimeDelay / 1000;
-
-            cout << "switch to L" << endl;
         }
         else if (indexPtr->name == "Lucy")
         {
@@ -159,7 +167,6 @@ void *consume(void *index)
             sleepTime.tv_nsec = miliSecHold * nanoConvert;
             sleepTime.tv_sec = indexPtr->ethelTimeDelay / 1000;
 
-            cout << "switch to E" << endl;
         }
         sem_post(&print);
         //check the number of items on the belt are >0 if so it will enter and decrement the #
@@ -173,6 +180,7 @@ void *consume(void *index)
         //inc candy count based on person
         Candy temp;
         temp.name = belt[indexPtr->beltIndex].name;
+        //increments Lucy's and Ethels counters
         if (indexPtr->name == "Lucy")
         {
             if (temp.name == "froggy bites")
@@ -213,13 +221,14 @@ void *consume(void *index)
         belt[indexPtr->beltIndex].name = "";
         indexPtr->conCount++;
 
+		//print statement 1
         sem_wait(&print);
         cout << "Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
              << " consumed " << belt[indexPtr->beltIndex].name
              << "index: " << indexPtr->beltIndex << "\nBELT= ";
         sem_post(&print);
-
+		//print statement 2
         sem_wait(&print);
         for (int i = 0; i < BELTSIZE; i++)
         {
@@ -227,9 +236,10 @@ void *consume(void *index)
         }
         cout << "\n";
         sem_post(&print);
+        //increment index
         indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
 
-        //increment
+        //increment sems
         sem_post(&mutex1);
         sem_post(&OpenSpaceOnBelt);
     }
@@ -283,8 +293,8 @@ int main(int argc, char *argv[])
     {
         belt[i].name = "";
     }
-
-    pthread_t prothread1, prothread2, cthread, Ethread;
+	//threads
+    pthread_t prothread1, prothread2, cthread;
 
     // initialize mutex, its a binary mutex so it is either going to be 0 or 1
     sem_init(&mutex1, 0, 1);
@@ -311,20 +321,16 @@ int main(int argc, char *argv[])
         pthread_create(&cthread, NULL, consume, (void *)&consumePlaceholder);
     }
 
-    /*
-    int r3 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
-    int r4 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
-    */
 
     pthread_join(prothread1, NULL);
     pthread_join(prothread2, NULL);
     pthread_join(cthread, NULL);
-    //pthread_join(Ethread, NULL);
 
     sem_destroy(&mutex1);
     sem_destroy(&ItemsOnBelt);
     sem_destroy(&OpenSpaceOnBelt);
 
+	//final print statement
     sem_wait(&print);
     cout << "\n"
          << "PRODUCTION REPORT" << '\n'
