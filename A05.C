@@ -96,14 +96,15 @@ void *produce(void *index)
         indexPtr->escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
         sem_wait(&print);
-        cout << ". Produced: " << indexPtr->produceCount
+        cout << "Produced: " << indexPtr->produceCount
              << " Added " << belt[indexPtr->beltIndex].name << 
-             "at index: " << indexPtr->beltIndex <<"\nBelt:" << endl;
+             "at index: " << indexPtr->beltIndex <<"\nBELT= ";
         sem_post(&print);
         sem_wait(&print);
         for(int i =0; i<BELTSIZE; i++){
-        	cout <<  i << ": " << belt[i].name << endl;	
+        	cout <<  i << ": " << belt[i].name << " ";	
         }
+        cout << "\n";
 		sem_post(&print);
 		indexPtr->beltIndex = (indexPtr->beltIndex +1) % BELTSIZE;
         //notifiy the end of this process
@@ -202,15 +203,16 @@ void *consume(void *index)
         cout << "Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
              << " consumed " << belt[indexPtr->beltIndex].name
-             << "index: " << indexPtr->beltIndex << "\nBelt:";
+             << "index: " << indexPtr->beltIndex << "\nBELT= ";
         sem_post(&print);
         
         
         
         sem_wait(&print);
         for(int i =0; i<BELTSIZE; i++){
-        	cout <<  i << ": " << belt[i].name << endl;	
+        	cout <<  i << ": " << belt[i].name << " ";	
         }
+        cout << "\n";
         sem_post(&print);
         indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
 
@@ -309,7 +311,7 @@ int main(int argc, char *argv[])
     sem_destroy(&OpenSpaceOnBelt);
 	
 	sem_wait(&print);
-    cout << "PRODUCTION REPORT" << '\n'
+    cout << "\n" << "PRODUCTION REPORT" << '\n'
          << "----------------------------------------" << '\n'
          << "Crunchy frog bite producer generated "
          << producePlaceholder.totalFrogs
