@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <iostream>
 #include <random>
-#include <unistd.h>
 #include <time.h>
 
 #define BELTSIZE 10
@@ -17,19 +16,25 @@ struct IndexManager
 {
     int beltIndex;
     int frogcounter;
-    int produceCount=0;
-    int conCount=0;
+    int produceCount = 0;
+    int conCount = 0;
     int escargotCount;
-	int totalFrogs;
-	int totalE;
+    int totalFrogs;
+    int totalE;
+    int frogProductionDelay = 0;
+    int escargotProductionDelay = 0;
 
     string name;
     int lucyTotalConsume = 0;
     int lucyFrogConsume = 0;
     int lucyEscargotConsume = 0;
+    int lucyTimeDelay = 0;
+
     int ethelTotalConsume = 0;
     int ethelFrogConsume = 0;
     int ethelEscargotConsume = 0;
+    int ethelTimeDelay = 0;
+
     int switchConsumer = 0;
 };
 

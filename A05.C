@@ -58,9 +58,6 @@ void *produce(void *index)
     //Loop production of candies till limit is reached
     while (indexPtr->produceCount < 99)
     {
-        //usleep(5);
-        
-       
         Candy nextCandy = createCandy();
 
         //keep track of number of froggy bites on belt at one time
@@ -83,30 +80,48 @@ void *produce(void *index)
         sem_wait(&OpenSpaceOnBelt);
         //will check if mutex is >=0 if so it will enter and decrement mutex
         sem_wait(&mutex1);
+
         //add item to buffer
         belt[indexPtr->beltIndex].name = nextCandy.name;
         indexPtr->produceCount++;
-		if (belt[indexPtr->beltIndex].name == "froggy bites"){
-				indexPtr->totalFrogs++;
-		}
-		else{
-			indexPtr->totalE++;
-		}
+
+        //setup for time delays
+        struct timespec sleepTime;
+        int nanoConvert = 1000000;
+
+        if (belt[indexPtr->beltIndex].name == "froggy bites")
+        {
+            indexPtr->totalFrogs++;
+
+            int miliSecHold = indexPtr->frogProductionDelay % 1000;
+            sleepTime.tv_nsec = miliSecHold * nanoConvert;
+            sleepTime.tv_sec = indexPtr->frogProductionDelay / 1000;
+        }
+        else
+        {
+            indexPtr->totalE++;
+
+            int miliSecHold = indexPtr->escargotProductionDelay % 1000;
+            sleepTime.tv_nsec = miliSecHold * nanoConvert;
+            sleepTime.tv_sec = indexPtr->escargotProductionDelay / 1000;
+        }
+
+        nanosleep(&sleepTime, NULL);
 
         indexPtr->escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
         sem_wait(&print);
         cout << "Produced: " << indexPtr->produceCount
-             << " Added " << belt[indexPtr->beltIndex].name << 
-             "at index: " << indexPtr->beltIndex <<"\nBELT= ";
+             << " Added " << belt[indexPtr->beltIndex].name << "at index: " << indexPtr->beltIndex << "\nBELT= ";
         sem_post(&print);
         sem_wait(&print);
-        for(int i =0; i<BELTSIZE; i++){
-        	cout <<  i << ": " << belt[i].name << " ";	
+        for (int i = 0; i < BELTSIZE; i++)
+        {
+            cout << i << ": " << belt[i].name << " ";
         }
         cout << "\n";
-		sem_post(&print);
-		indexPtr->beltIndex = (indexPtr->beltIndex +1) % BELTSIZE;
+        sem_post(&print);
+        indexPtr->beltIndex = (indexPtr->beltIndex + 1) % BELTSIZE;
         //notifiy the end of this process
         sem_post(&mutex1);
         sem_post(&ItemsOnBelt);
@@ -118,39 +133,42 @@ void *consume(void *index)
 {
     struct IndexManager *indexPtr;
     indexPtr = (struct IndexManager *)index;
-    //int x=0;
+
+    //setup for time delays
+    struct timespec sleepTime;
+    int nanoConvert = 1000000;
 
     while (indexPtr->conCount < 99)
     {
-    	sem_wait(&print);
-    	if (indexPtr->name=="Ethel"){
-    		indexPtr->name = "Lucy";
-    		cout << "switch to L" << endl;
-    	}
-    	else if (indexPtr->name== "Lucy"){
-    		indexPtr->name = "Ethel";
-    		cout << "switch to E" << endl;
-    	}
-    	sem_post(&print);
+        sem_wait(&print);
+        if (indexPtr->name == "Ethel")
+        {
+            indexPtr->name = "Lucy";
+
+            int miliSecHold = indexPtr->lucyTimeDelay % 1000;
+            sleepTime.tv_nsec = miliSecHold * nanoConvert;
+            sleepTime.tv_sec = indexPtr->lucyTimeDelay / 1000;
+
+            cout << "switch to L" << endl;
+        }
+        else if (indexPtr->name == "Lucy")
+        {
+            indexPtr->name = "Ethel";
+
+            int miliSecHold = indexPtr->ethelTimeDelay % 1000;
+            sleepTime.tv_nsec = miliSecHold * nanoConvert;
+            sleepTime.tv_sec = indexPtr->ethelTimeDelay / 1000;
+
+            cout << "switch to E" << endl;
+        }
+        sem_post(&print);
         //check the number of items on the belt are >0 if so it will enter and decrement the #
         sem_wait(&ItemsOnBelt);
         //will check if mutex is greater than >0 if so it will enter and decrement 0
         sem_wait(&mutex1);
-        
 
-        //switch between Lucy and Ethel consuming candies
-        /*
-        if (indexPtr->switchConsumer = 0)
-        {
-            indexPtr->name = "Lucy";
-            indexPtr->switchConsumer++;
-        }
-        else
-        {
-            indexPtr->name = "Ethel";
-            indexPtr->switchConsumer--;
-        }
-        */
+        //Delay happens here
+        nanosleep(&sleepTime, NULL);
 
         //inc candy count based on person
         Candy temp;
@@ -180,8 +198,6 @@ void *consume(void *index)
             indexPtr->ethelTotalConsume++;
         }
 
-        
-
         //get amount of froggy bites after consumption
         for (int j = 0; j < BELTSIZE; j++)
         {
@@ -193,24 +209,21 @@ void *consume(void *index)
         //get amount of escargot suckers after consumption
         int escargotCount = getCandyCount(belt) - indexPtr->frogcounter;
 
-        
-
         //remove candy
         belt[indexPtr->beltIndex].name = "";
         indexPtr->conCount++;
-        
+
         sem_wait(&print);
         cout << "Consumed: " << indexPtr->conCount
              << " " << indexPtr->name
              << " consumed " << belt[indexPtr->beltIndex].name
              << "index: " << indexPtr->beltIndex << "\nBELT= ";
         sem_post(&print);
-        
-        
-        
+
         sem_wait(&print);
-        for(int i =0; i<BELTSIZE; i++){
-        	cout <<  i << ": " << belt[i].name << " ";	
+        for (int i = 0; i < BELTSIZE; i++)
+        {
+            cout << i << ": " << belt[i].name << " ";
         }
         cout << "\n";
         sem_post(&print);
@@ -225,34 +238,44 @@ void *consume(void *index)
 
 int main(int argc, char *argv[])
 {
+    //init struct and set attr for produce thread
+    struct IndexManager producePlaceholder;
+    producePlaceholder.beltIndex = 0;
+    producePlaceholder.produceCount = 0;
+    producePlaceholder.frogcounter = 0;
+
+    //init struct and set attr for consume thread
+    struct IndexManager consumePlaceholder;
+    consumePlaceholder.beltIndex = 0;
+    consumePlaceholder.conCount = 0;
+
     //Handles flags from command line
     char *hold;
-    int timeDelay = 0;
 
     for (int k = 1; k < argc; k++)
     {
         if ((strncmp(argv[k], "-E", 2)) == 0)
         {
             hold = argv[k + 1];
-            timeDelay = stoi(hold);
+            consumePlaceholder.ethelTimeDelay = stoi(hold);
         }
 
         if ((strncmp(argv[k], "-L", 2)) == 0)
         {
             hold = argv[k + 1];
-            timeDelay = stoi(hold);
+            consumePlaceholder.lucyTimeDelay = stoi(hold);
         }
 
         if ((strncmp(argv[k], "-f", 2)) == 0)
         {
             hold = argv[k + 1];
-            timeDelay = stoi(hold);
+            producePlaceholder.frogProductionDelay = stoi(hold);
         }
 
         if ((strncmp(argv[k], "-e", 2)) == 0)
         {
             hold = argv[k + 1];
-            timeDelay = stoi(hold);
+            producePlaceholder.escargotProductionDelay = stoi(hold);
         }
     }
 
@@ -272,31 +295,23 @@ int main(int argc, char *argv[])
     //init size of print, make this a binary semaphore
     sem_init(&print, 0, 1);
 
-    //init struct and set attr for produce thread
-    struct IndexManager producePlaceholder;
-    producePlaceholder.beltIndex = 0;
-    producePlaceholder.produceCount = 0;
-    producePlaceholder.frogcounter = 0;
-
-    //init struct and set attr for consume thread
-    struct IndexManager consumePlaceholder;
-    consumePlaceholder.beltIndex = 0;
-    consumePlaceholder.conCount = 0;
-
     int r1 = pthread_create(&prothread1, NULL, produce, (void *)&producePlaceholder);
     int r2 = pthread_create(&prothread2, NULL, produce, (void *)&producePlaceholder);
-	
-	for(int k =0; k<=1; k++){
-		if(k==0){
-			consumePlaceholder.name = "Ethel";
-		}
-		else{
-			consumePlaceholder.name = "Lucy";
-		}
-		pthread_create(&cthread, NULL, consume, (void *)&consumePlaceholder);
-	}
-	
-	/*
+
+    for (int k = 0; k <= 1; k++)
+    {
+        if (k == 0)
+        {
+            consumePlaceholder.name = "Ethel";
+        }
+        else
+        {
+            consumePlaceholder.name = "Lucy";
+        }
+        pthread_create(&cthread, NULL, consume, (void *)&consumePlaceholder);
+    }
+
+    /*
     int r3 = pthread_create(&Lthread, NULL, consume, (void *)&consumePlaceholder);
     int r4 = pthread_create(&Ethread, NULL, consume, (void *)&consumePlaceholder);
     */
@@ -309,9 +324,10 @@ int main(int argc, char *argv[])
     sem_destroy(&mutex1);
     sem_destroy(&ItemsOnBelt);
     sem_destroy(&OpenSpaceOnBelt);
-	
-	sem_wait(&print);
-    cout << "\n" << "PRODUCTION REPORT" << '\n'
+
+    sem_wait(&print);
+    cout << "\n"
+         << "PRODUCTION REPORT" << '\n'
          << "----------------------------------------" << '\n'
          << "Crunchy frog bite producer generated "
          << producePlaceholder.totalFrogs
@@ -330,6 +346,6 @@ int main(int argc, char *argv[])
          << consumePlaceholder.ethelEscargotConsume
          << " escargot suckers = " << consumePlaceholder.ethelTotalConsume
          << endl;
-     sem_post(&print);
-     sem_destroy(&print);
+    sem_post(&print);
+    sem_destroy(&print);
 }
